@@ -1,27 +1,46 @@
 import streamlit as st
 import pickle
 import pandas as pd
+import os
 
-# Load
-model = pickle.load(open("model.pkl", "rb"))
-columns = pickle.load(open("columns.pkl", "rb"))
+# -------------------------------
+# 🔍 DEBUG (VERY IMPORTANT)
+# -------------------------------
+st.write("Current directory:", os.getcwd())
+st.write("Files in directory:", os.listdir())
 
+# -------------------------------
+# 📂 LOAD MODEL SAFELY
+# -------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model_path = os.path.join(BASE_DIR, "model.pkl")
+columns_path = os.path.join(BASE_DIR, "columns.pkl")
+
+model = pickle.load(open(model_path, "rb"))
+columns = pickle.load(open(columns_path, "rb"))
+
+# -------------------------------
+# 🎯 UI
+# -------------------------------
 st.title("💻 Laptop Price Predictor")
 
-# Inputs
 company = st.selectbox("Company", ["Dell", "HP", "Apple", "Asus", "Acer"])
 typename = st.selectbox("Type", ["Notebook", "Gaming", "Ultrabook"])
-inches = st.slider("Screen Size", 10.0, 18.0, 15.6)
+inches = st.slider("Screen Size (inches)", 10.0, 18.0, 15.6)
 ram = st.selectbox("RAM (GB)", [4, 8, 16, 32])
 memory = st.selectbox("Storage (GB)", [128, 256, 512, 1024])
 cpu = st.selectbox("CPU Brand", ["Intel", "AMD"])
 gpu = st.selectbox("GPU Brand", ["Intel", "Nvidia", "AMD"])
-opsys = st.selectbox("OS", ["Windows", "Mac", "Linux"])
+opsys = st.selectbox("Operating System", ["Windows", "Mac", "Linux"])
 weight = st.slider("Weight (kg)", 1.0, 4.0, 2.0)
 
-# Approx resolution
+# Approx resolution (fixed for simplicity)
 pixelcount = 1920 * 1080
 
+# -------------------------------
+# 🔮 PREDICTION
+# -------------------------------
 if st.button("Predict Price"):
 
     input_data = {
@@ -40,8 +59,11 @@ if st.button("Predict Price"):
     df = pd.DataFrame([input_data])
     df = df.reindex(columns=columns, fill_value=0)
 
-    price = model.predict(df)[0]
-    Estimated_price=0-price
-    rounded_price=round(Estimated_price,2)
+    prediction = model.predict(df)[0]
 
-    st.success(f"💰 Estimated Price: ₹{rounded_price}")
+    # ✅ Prevent negative price
+    prediction = max(0, prediction)
+
+    st.success(f"💰 Estimated Price: ₹{prediction:.2f}")
+
+   
